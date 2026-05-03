@@ -1,31 +1,36 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tico/features/timer/domain/timer_state.dart';
+import 'package:tico/domain/models/task_model.dart';
 
 void main() {
-  group('TimerState', () {
-    test('initial state is idle work phase', () {
-      const state = TimerState();
-      expect(state.phase, TimerPhase.work);
-      expect(state.status, TimerStateStatus.idle);
-      expect(state.remainingSeconds, 25 * 60);
-      expect(state.totalSeconds, 25 * 60);
-      expect(state.completedPomodoros, 0);
+  group('TaskModel', () {
+    test('creates with defaults', () {
+      final task = TaskModel(id: '1', title: 'Test');
+      expect(task.completed, false);
+      expect(task.pomodoros, 0);
+      expect(task.totalPomodoros, 1);
     });
 
-    test('progress starts at 0', () {
-      const state = TimerState();
-      expect(state.progress, 0.0);
+    test('copyWith works', () {
+      final task = TaskModel(id: '1', title: 'Test');
+      final updated = task.copyWith(title: 'Updated', pomodoros: 2);
+      expect(updated.title, 'Updated');
+      expect(updated.pomodoros, 2);
+      expect(updated.id, '1');
     });
 
-    test('copyWith works correctly', () {
-      const state = TimerState();
-      final updated = state.copyWith(
-        remainingSeconds: 20 * 60,
-        status: TimerStateStatus.running,
+    test('json roundtrip', () {
+      final task = TaskModel(
+        id: '1',
+        title: 'Test',
+        completed: true,
+        pomodoros: 3,
+        totalPomodoros: 5,
       );
-      expect(updated.remainingSeconds, 20 * 60);
-      expect(updated.status, TimerStateStatus.running);
-      expect(updated.phase, TimerPhase.work);
+      final json = task.toJson();
+      final restored = TaskModel.fromJson(json);
+      expect(restored.title, 'Test');
+      expect(restored.completed, true);
+      expect(restored.pomodoros, 3);
     });
   });
 }

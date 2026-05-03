@@ -23,8 +23,6 @@ dependencies:
 
   flutter_local_notifications: ^17.1.2
 
-  audioplayers: ^6.1.0
-
   fl_chart: ^0.68.0
 
   freezed_annotation: ^2.4.3
@@ -59,7 +57,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  assets:
-    - assets/sounds/
-    - assets/images/
