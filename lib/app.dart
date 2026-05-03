@@ -5,6 +5,7 @@ import '../features/tasks/presentation/tasks_screen.dart';
 import '../features/statistics/presentation/statistics_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
 import '../shared/widgets/navigation_bar.dart';
+import '../shared/widgets/background_slideshow.dart';
 import '../core/constants/app_colors.dart';
 
 typedef View = String;
@@ -25,11 +26,22 @@ class _TicoAppState extends ConsumerState<TicoApp> {
     }
   }
 
+  Widget _buildView(View view) {
+    return switch (view) {
+      'timer' => const TimerScreen(key: ValueKey('timer')),
+      'tasks' => const TasksScreen(key: ValueKey('tasks')),
+      'stats' => const StatsScreen(key: ValueKey('stats')),
+      'settings' => const SettingsScreen(key: ValueKey('settings')),
+      _ => const TimerScreen(key: ValueKey('timer')),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pomodoro Focus',
+      title: 'Tico',
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const MaterialScrollBehavior().copyWith(scrollbars: false),
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.bgTint,
@@ -39,22 +51,20 @@ class _TicoAppState extends ConsumerState<TicoApp> {
           onSurface: AppColors.primary,
         ),
         fontFamily: 'Inter',
+        scrollbarTheme: const ScrollbarThemeData(
+          thumbVisibility: WidgetStatePropertyAll(false),
+          trackVisibility: WidgetStatePropertyAll(false),
+          thickness: WidgetStatePropertyAll(0),
+        ),
       ),
       home: Scaffold(
         body: Stack(
           children: [
-            // Background Image
+            // Background Slideshow
             Positioned.fill(
-              child: Image.network(
-                'https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=2000&q=80',
-                fit: BoxFit.cover,
-                opacity: const AlwaysStoppedAnimation(0.7),
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(color: AppColors.bgTint);
-                },
-              ),
+              child: const BackgroundSlideshow(),
             ),
-            // Overlay tint
+            // Semi-transparent overlay tint
             Positioned.fill(
               child: Container(color: AppColors.bgOverlay),
             ),
@@ -77,7 +87,7 @@ class _TicoAppState extends ConsumerState<TicoApp> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'POMODORO FOCUS',
+                          'TICO',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -90,20 +100,44 @@ class _TicoAppState extends ConsumerState<TicoApp> {
                   ),
                   // Main content
                   Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      switchInCurve: const Interval(0, 1, curve: Curves.easeOutCubic),
-                      switchOutCurve: const Interval(0, 1, curve: Curves.easeInCubic),
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _buildView(_currentView),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 672),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 400),
+                        switchInCurve: const Interval(0, 1, curve: Curves.easeOutCubic),
+                        switchOutCurve: const Interval(0, 1, curve: Curves.easeInCubic),
+                        transitionBuilder: (child, animation) {
+                          final isEntering = (child.key as ValueKey<String>).value == _currentView;
+                          if (isEntering) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
+                                child: child,
+                              ),
+                            );
+                          } else {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: 1.0, end: 1.02)
+                                    .animate(ReverseAnimation(animation)),
+                                child: child,
+                              ),
+                            );
+                          }
+                        },
+                        layoutBuilder: (currentChild, previousChildren) {
+                          return Stack(
+                            alignment: Alignment.topCenter,
+                            children: [
+                              ...previousChildren,
+                              if (currentChild != null) currentChild,
+                            ],
+                          );
+                        },
+                        child: _buildView(_currentView),
+                      ),
                     ),
                   ),
                   // Navigation
@@ -118,15 +152,5 @@ class _TicoAppState extends ConsumerState<TicoApp> {
         ),
       ),
     );
-  }
-
-  Widget _buildView(View view) {
-    return switch (view) {
-      'timer' => const TimerScreen(key: ValueKey('timer')),
-      'tasks' => const TasksScreen(key: ValueKey('tasks')),
-      'stats' => const StatsScreen(key: ValueKey('stats')),
-      'settings' => const SettingsScreen(key: ValueKey('settings')),
-      _ => const TimerScreen(key: ValueKey('timer')),
-    };
   }
 }
